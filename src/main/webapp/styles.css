@@ -1,0 +1,15 @@
+@charset "ISO-8859-1";
+
+.headers {
+	background-color: #1eb71e;
+	color: white;
+}
+    
+.headers th {
+    	padding:10px;
+    	font-size: 16px;
+}
+
+.results td {
+	padding: 5px;
+}
