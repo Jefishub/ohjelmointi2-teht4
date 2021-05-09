@@ -50,6 +50,7 @@ $(document).ready(function() {
 	});
 
 	var asiakas_id = parseInt(requestURLParam("asiakas_id"));
+	$('#tiedot').append('<input type="hidden" name="id" value='+asiakas_id+' />');
 	$.ajax({url:"asiakkaat/haeyksi/"+asiakas_id, type:"GET", dataType:"json", success:function(result) {
 		$("#etunimi").val(result.etunimi);
 		$("#sukunimi").val(result.sukunimi);
@@ -102,12 +103,11 @@ $(document).ready(function() {
 
 function muutaTiedot(){	
 	var formJsonStr = formDataJsonStr($("#tiedot").serializeArray()); //muutetaan lomakkeen tiedot json-stringiksi
-	$.ajax({url:"asiakkaat/haeyksi/"+asiakas_id, data:formJsonStr, type:"PUT", dataType:"json", success:function(result) { //result on joko {"response:1"} tai {"response:0"}       
+	$.ajax({url:"asiakkaat", data:formJsonStr, type:"PUT", dataType:"json", success:function(result) { //result on joko {"response:1"} tai {"response:0"}       
 		if(result.response==0){
 	    	$("#ilmo").html("Asiakkaan tietojen muuttaminen epäonnistui.");
 	    }else if(result.response==1){			
 	    	$("#ilmo").html("Asiakkaan tietojen muuttaminen onnistui.");
-	    	$("#etunimi", "#sukunimi", "#puhelin", "#email").val("");
 			}
 	}});	
 }
