@@ -26,7 +26,7 @@
 			<th>Etunimi</th>
 			<th>Sukunimi</th>
 			<th>Puhelin</th>
-			<th>Sposti</th>
+			<th>Sähköposti</th>
 			<th colspan="2"></th>						
 		</tr>
 	</thead>
@@ -55,20 +55,17 @@ $(document).ready(function(){
 function haeAsiakkaat(){
 	$("#listaus tbody").empty();
 	$.ajax({url:"asiakkaat/"+$("#hakusana").val(), type:"GET", dataType:"json", success:function(result){//Funktio palauttaa tiedot json-objektina
-		console.log(result)
-		$.each(result.asiakas, function(i, field){
+		$.each(result.asiakkaat, function(i, field){
         	var htmlStr;
         	htmlStr="<tr>";
         	htmlStr+="<td>"+field.etunimi+"</td>";
         	htmlStr+="<td>"+field.sukunimi+"</td>";
         	htmlStr+="<td>"+field.puhelin+"</td>";
         	htmlStr+="<td>"+field.email+"</td>";
-        	htmlStr+="<td>"+field.email+"</td>";
-        	htmlStr+="<td><span class='poista' onclick=poista('"+field.id+"','"+field.etunimi+"','"+field.sukunimi+"')>Poista</span></td>";
+        	htmlStr+="<td><a href='muutaasiakas.jsp?asiakas_id="+field.id+"'>Muuta</a>&nbsp;";
+        	htmlStr+="<span class='poista' onclick=poista('"+field.id+"','"+field.etunimi+"','"+field.sukunimi+"')>Poista</span></td>";
         	htmlStr+="</tr>";
         	$("#listaus tbody").append(htmlStr);
-        	console.log("WORKING????")
-        	console.log(htmlStr)
         });	
     }});
 }
