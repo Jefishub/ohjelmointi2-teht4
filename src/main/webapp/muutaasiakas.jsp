@@ -5,25 +5,17 @@
 <head>
 <meta charset="ISO-8859-1">
 <script src="scripts/main.js"></script>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-<script src="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.15.0/jquery.validate.min.js"></script>
-<title>Insert title here</title>
-<link rel="stylesheet" href="${pageContext.request.contextPath}/css/main.css" />
-<style>
-.oikealle{
-	text-align: right;
-}
-</style>
+<link rel="stylesheet" type="text/css" href="css/main.css">
+<title>Asiakkaan tietojen muutos</title>
 </head>
-<body>
+<body onkeydown="tutkiKey(event)">
 <form id="tiedot">
 	<table >
 		<thead class="headers">	
 			<tr>
-				<th class="oikealle">Hakusana:</th>
-				<th colspan="2"><input type="text" id="hakusana"></th>
-				<th colspan="2" class="oikealle"><span id="takaisin">Palaa listaukseen</span></th>
-			</tr>			
+				<th colspan="3" id="ilmo"></th>
+				<th colspan="2" class="oikealle"><a href="listaaasiakkaat.jsp" id="takaisin">Takaisin listaukseen</a></th>
+			</tr>		
 			<tr>
 				<th>Etunimi</th>
 				<th>Sukunimi</th>
@@ -37,81 +29,91 @@
 				<td><input type="text" name="sukunimi" id="sukunimi"></td>
 				<td><input type="text" name="puhelin" id="puhelin"></td>
 				<td><input type="text" name="email" id="email"></td> 
-				<td><input type="submit" id="tallenna" value="muuta"></td>
+				<td><input type="button" id="tallenna" value="Hyväksy" onclick="vieTiedot()"></td>
 			</tr>
 		</tbody>
 	</table>
+	<input type="hidden" name="asiakas_id" id="asiakas_id">	
 </form>
 <span id="ilmo"></span>
 <script>
-$(document).ready(function() {
-	$("#takaisin").click(function() {
-		document.location="listaaasiakkaat.jsp";
-	});
-
-	var asiakas_id = parseInt(requestURLParam("asiakas_id"));
-	$('#tiedot').append('<input type="hidden" name="id" value='+asiakas_id+' />');
-	$.ajax({url:"asiakkaat/haeyksi/"+asiakas_id, type:"GET", dataType:"json", success:function(result) {
-		$("#etunimi").val(result.etunimi);
-		$("#sukunimi").val(result.sukunimi);
-		$("#puhelin").val(result.puhelin);
-		$("#email").val(result.email);
-	}});
-	
-	$("#tiedot").validate({						
-		rules: {
-			etunimi:  {
-				required: true,
-				minlength: 1				
-			},	
-			sukunimi:  {
-				required: true,
-				minlength: 1				
-			},
-			puhelin:  {
-				required: true,
-				minlength: 1
-			},	
-			email:  {
-				required: true,
-				minlength: 5,
-			}	
-		},
-		messages: {
-			etunimi: {     
-				required: "Puuttuu",
-				minlength: "Liian lyhyt"			
-			},
-			sukunimi: {
-				required: "Puuttuu",
-				minlength: "Liian lyhyt"
-			},
-			puhelin: {
-				required: "Puuttuu",
-				minlength: "Liian lyhyt"
-			},
-			email: {
-				required: "Puuttuu",
-				minlength: "Liian lyhyt"
-			}
-		},			
-		submitHandler: function(form) {	
-			muutaTiedot();
-		}
-	});
-})
-
-function muutaTiedot(){	
-	var formJsonStr = formDataJsonStr($("#tiedot").serializeArray()); //muutetaan lomakkeen tiedot json-stringiksi
-	$.ajax({url:"asiakkaat", data:formJsonStr, type:"PUT", dataType:"json", success:function(result) { //result on joko {"response:1"} tai {"response:0"}       
-		if(result.response==0){
-	    	$("#ilmo").html("Asiakkaan tietojen muuttaminen epäonnistui.");
-	    }else if(result.response==1){			
-	    	$("#ilmo").html("Asiakkaan tietojen muuttaminen onnistui.");
-			}
-	}});	
+function tutkiKeyX(event){
+	if(event.keyCode==13){//Enter
+		vieTiedot();
+	}		
+}
+var tutkiKey = (event) => {
+	if(event.keyCode==13){//Enter
+		vieTiedot();
+	}	
 }
 
+document.getElementById("etunimi").focus();//viedään kursori rekno-kenttään sivun latauksen yhteydessä
+
+//Haetaan muutettavan asiakkaan tiedot. Kutsutaan backin GET-metodia ja välitetään kutsun mukana muutettavan tiedon id
+//GET /asiakkaat/haeyksi/asiakas_id
+var asiakas_id = requestURLParam("asiakas_id"); //Funktio löytyy scripts/main.js 
+document.getElementById("asiakas_id").value = asiakas_id;
+console.log(asiakas_id)
+fetch("asiakkaat/haeyksi/" + asiakas_id,{//Lähetetään kutsu backendiin
+      method: 'GET'	      
+    })
+.then( function (response) {//Odotetaan vastausta ja muutetaan JSON-vastausteksti objektiksi
+	return response.json()
+})
+.then( function (responseJson) {//Otetaan vastaan objekti responseJson-parametrissä	
+	console.log(responseJson);
+	document.getElementById("etunimi").value = responseJson.etunimi;		
+	document.getElementById("sukunimi").value = responseJson.sukunimi;	
+	document.getElementById("puhelin").value = responseJson.puhelin;	
+	document.getElementById("email").value = responseJson.email;
+});	
+
+//Funktio tietojen muuttamista varten. Kutsutaan backin PUT-metodia ja välitetään kutsun mukana muutetut tiedot json-stringinä.
+//PUT /autot/
+function vieTiedot(){	
+	var ilmo="";
+	var d = new Date();
+	if(document.getElementById("etunimi").value.length<1){
+		ilmo="Etunimi ei kelpaa!";		
+	}else if(document.getElementById("sukunimi").value.length<1){
+		ilmo="Sukunimi ei kelpaa!";		
+	}else if(document.getElementById("puhelin").value.length<1){
+		ilmo="Puhelinnumero ei ole kelvollinen!";		
+	}else if(document.getElementById("email").value.length<1){
+		ilmo="Sähköposti ei ole kelpaa!";				
+	}
+	if(ilmo!=""){
+		document.getElementById("ilmo").innerHTML=ilmo;
+		setTimeout(function(){ document.getElementById("ilmo").innerHTML=""; }, 3000);
+		return;
+	}
+	document.getElementById("etunimi").value=siivoa(document.getElementById("etunimi").value);
+	document.getElementById("sukunimi").value=siivoa(document.getElementById("sukunimi").value);
+	document.getElementById("puhelin").value=siivoa(document.getElementById("puhelin").value);
+	document.getElementById("email").value=siivoa(document.getElementById("email").value);	
+	
+	var formJsonStr=formDataToJSON(document.getElementById("tiedot")); //muutetaan lomakkeen tiedot json-stringiksi
+	console.log(formJsonStr);
+	//Lähetään muutetut tiedot backendiin
+	fetch("asiakkaat",{//Lähetetään kutsu backendiin
+	      method: 'PUT',
+	      body:formJsonStr
+	    })
+	.then( function (response) {//Odotetaan vastausta ja muutetaan JSON-vastaus objektiksi
+		return response.json();
+	})
+	.then( function (responseJson) {//Otetaan vastaan objekti responseJson-parametrissä	
+		var vastaus = responseJson.response;		
+		if(vastaus==0){
+			document.getElementById("ilmo").innerHTML= "Tietojen päivitys epäonnistui";
+        }else if(vastaus==1){	        	
+        	document.getElementById("ilmo").innerHTML= "Tietojen päivitys onnistui";			      	
+		}	
+		setTimeout(function(){ document.getElementById("ilmo").innerHTML=""; }, 5000);
+	});	
+	document.getElementById("tiedot").reset(); //tyhjennetään tiedot -lomake
+}
 </script>
 </body>
 </html>
